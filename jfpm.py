@@ -1,55 +1,40 @@
 # -*- coding: utf-8 -*-
 """
-A code-VEP experiment script.
-    (1) based on 60Hz SSVEP
-    (2) 6 codes: 
-        [1,0,-1,0,0,0]; [0,1,0,-1,0,0]; [0,0,1,0,-1,0]; [0,0,0,1,0,-1]; [-1,0,0,0,1,0]; [0,-1,0,0,0,1]
-    (3) 1 for 0 phase, 0 for empty, -1 for pi phase
+Common SSVEP stimulus program (JFPM)
 
 Author: Brynhildr W
-update: 30/3/2021
+Refer: 
+    Swolf (NeuroScanPort)
+update: 2021/6/29
+
 """
 
-# %% load modules
+# load modules
 import os
 import string
 import sys
 
 import numpy as np
+from numpy import (sin, pi)
+from numpy import newaxis as NA
 import scipy.io as io
 
 from psychopy import (core, data, visual, monitors, event)
 
-from ex_base import (NeuroScanPort, sinusoidal_sample, square_sample)
-
-# Config code-VEP
-# event.clearEvents()
+from ex_base import (NeuroScanPort, sinusoidal_sample)
 
 # port_available = False
 # port_address = 0xDEFC
 # port = NeuroScanPort(port_address=port_address)
 
-# load in code infomation
-code_series = np.array(([1,0,1,0,-1,0,-1,0], [1,0,-1,0,1,0,-1,0],
-                        [-1,0,1,0,-1,0,1,0], [1,0,1,0,1,0,-1,0],
-                        [-1,0,1,0,1,0,-1,0], [-1,0,-1,0,-1,0,-1,0],
-                        [1,0,-1,0,-1,0,1,0], [-1,0,1,0,-1,0,-1,0],
-                        [-1,0,-1,0,1,0,1,0], [1,0,1,0,-1,0,1,0],
-                        [-1,0,1,0,1,0,1,0], [-1,0,-1,0,-1,0,1,0],
-                        [1,0,1,0,1,0,1,0], [-1,0,-1,0,1,0,-1,0],
-                        [1,0,-1,0,-1,0,-1,0], [1,0,-1,0,1,0,1,0]))
-data_path = r'D:\SSVEP\program\ncw_16codes.mat'
-code_data = io.loadmat(data_path)
-code_series = code_data['CodeSeries']  # (n_codes, n_elements)
-
+# config window object
 win = visual.Window([1920, 1080], color=(-1,-1,-1), fullscr=False, monitor='testmonitor',
                     screen=0, waitBlanking=False, allowGUI=True)
 win.mouseVisible = False
-
 event.globalKeys.add(key='escape', func=win.close)
 
-# config code-VEP stimuli
-n_elements = 16                          # number of the objects
+# config basic parameters of stimuli
+n_elements = 32                          # number of the objects
 stim_sizes = np.zeros((n_elements, 2))   # size array | unit: pix
 stim_pos = np.zeros((n_elements, 2))     # position array
 stim_oris = np.zeros((n_elements,))      # orientation array (default 0)
@@ -63,17 +48,16 @@ square_size = np.array([square_len, square_len])
 stim_sizes[:] = square_size 
 
 win_size = np.array(win.size)
-rows, columns = 4, 4
+rows, columns = 4, 8
 distribution = np.array([columns, rows])
 
 # divide the whole screen into rows*columns blocks, and pick the center of each block as the position
 origin_pos = np.array([win_size[0]/columns, win_size[1]/rows]) / 2
 if (origin_pos[0]<(square_len/2)) or (origin_pos[1]<(square_len/2)):
     raise Exception('Too much blocks or too big the single square!')
-else:
-    for i in range(distribution[0]):      # loop in columns
-        for j in range(distribution[1]):  # loop in rows
-            stim_pos[i*distribution[1]+j] = origin_pos + [i,j]*origin_pos*2
+for i in range(distribution[0]):  # loop in columns
+    for j in range(distribution[1]):  # loop in rows
+        stim_pos[i*distribution[1]+j] = origin_pos + [i,j]*origin_pos*2
 
 # Note that those coordinates are not the real ones that need to be set on the screen.
 # Actually the origin point of the coordinates axis is right on the center of the screen
@@ -82,56 +66,31 @@ else:
 stim_pos -= win_size/2  # from Quadrant 1 to Quadrant 3
 stim_pos[:,1] *= -1     # invert the y-axis
 
-# config time template (using frames)
-# refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=10, nWarmUpFrames=10))
+# config ssvep
+# refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
 refresh_rate = 60
-display_time = 0.5  # keyboard display time before 1st stimulus
-index_time = 0.5  # indicator display time
-rest_time = 1  # rest-state time
-code_time = 0.5  # time for each code
-blink_time = 0.5  # blink time
-code_frames = int(code_time*refresh_rate)
+display_time = 1.  # keyboard display time before 1st stimulus
+index_time = 0.5   # indicator display time
+rest_time = 0.5    # rest-state time
+blink_time = 0.5
+flash_time= 0.5
+flash_frames = int(flash_time*refresh_rate)
 
-# config code colors
-len_code = 8
-color_b = np.zeros((6,3))
-color_p, color_n = np.zeros((code_frames,3)), np.zeros((code_frames,3))
-for i in range(int(code_frames)):
-    if i%4==0 or i%4==2:  # 1st and 3rd frame (in each period): grey
-        color_p[i,:] = np.array((0,0,0))
-    elif i%4==1:  # 2nd frame (in each period): white for 0
-        color_p[i,:] = np.array((1,1,1))
-    elif i%4==3:  # 4th frame (in each period): black for 0
-        color_p[i,:] = -1*np.array((1,1,1))
-color_n = -1*color_p
+# config colors
+freqs = [x+4 for x in range(16)]  # 15-30Hz, d=1Hz
+phases = [0,1]  # 0 & pi
+stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='combine')
 
-stim_frames = 4*(code_frames+6)
-color_frame = np.zeros((stim_frames, n_elements, 3))
-
-n = 0
-for code in code_series:
-    temp = np.zeros((1,3))
-    for i in range(len_code):
-        if code[i] == 0:
-            temp = np.concatenate((temp, color_b), axis=0)
-        elif code[i] == 1:
-            temp = np.concatenate((temp, color_p), axis=0)
-        elif code[i] == -1:
-            temp = np.concatenate((temp, color_n), axis=0)
-    temp = np.delete(temp, 0, axis=0)
-    color_frame[:,n,:] = temp
-    n += 1
-del n, i
-
-cw_stimuli = []
-for i in range(stim_frames):
-    cw_stimuli.append(visual.ElementArrayStim(win=win, units='pix', nElements=n_elements,
-    sizes=stim_sizes, xys=stim_pos, colors=color_frame[i,...], opacities=stim_opacities,
+# config flashing elements
+ssvep_stimuli = []
+for i in range(flash_frames):  # add your simuli for each frame
+    ssvep_stimuli.append(visual.ElementArrayStim(win=win, units='pix', nElements=n_elements,
+    sizes=stim_sizes, xys=stim_pos, colors=stim_colors[i,...], opacities=stim_opacities,
     oris=stim_oris, sfs=stim_sfs, contrs=stim_contrs, phases=stim_phases, elementTex=np.ones((128,128)),
     elementMask=None, texRes=48))
 
 # config text simuli
-symbols = ''.join([string.ascii_uppercase, '/12345'])
+symbols = ''.join([string.ascii_uppercase, '/12345'])  # if you want more stimulus, just add more symbols
 text_stimuli = []
 for symbol, pos in zip(symbols, stim_pos):
     text_stimuli.append(visual.TextStim(win=win, text=symbol, font='Arial', pos=pos, color=(1.,1.,1.), colorSpace='rgb',
@@ -145,9 +104,9 @@ index_stimuli = visual.TextStim(win=win, text='\u2BC6', font='Arial', color=(1.,
                                 units='pix', height=square_len/2, bold=True, name=symbol, autoLog=False)
 
 # config experiment parameters
-cw_conditions = [{'id': i} for i in range(n_elements)]
-cw_nrep = 1
-trials = data.TrialHandler(cw_conditions, cw_nrep, name='code-words', method='random')
+ssvep_conditions = [{'id': i} for i in range(n_elements)]
+ssvep_nrep = 1
+trials = data.TrialHandler(ssvep_conditions, ssvep_nrep, name='ssvep', method='random')
 
 # initialise experiment
 # if port_available:
@@ -156,7 +115,7 @@ trials = data.TrialHandler(cw_conditions, cw_nrep, name='code-words', method='ra
 routine_timer = core.CountdownTimer()
 
 # start routine
-# display speller
+# display speller interface
 routine_timer.reset(0)
 routine_timer.add(display_time)
 while routine_timer.getTime() > 0:
@@ -164,13 +123,13 @@ while routine_timer.getTime() > 0:
         text_stimulus.draw()
     win.flip()
 
-# %% begin to flash
+# begin to flash
 for trial in trials:
     # initialise index position
     id = int(trial['id'])
     index_stimuli.setPos(stim_pos[id] + np.array([0, square_len/2]))
 
-    # Phase 1: speller & index
+    # Phase 1: speller & index (eye shifting)
     routine_timer.reset(0)
     routine_timer.add(index_time)
     while routine_timer.getTime() > 0:
@@ -179,7 +138,7 @@ for trial in trials:
         index_stimuli.draw()
         win.flip()
     
-    # Phase 2: eye shifting
+    # Phase 2: rest state
     routine_timer.reset(0)
     routine_timer.add(rest_time)
     while routine_timer.getTime() > 0:
@@ -187,14 +146,13 @@ for trial in trials:
             text_stimulus.draw()
         win.flip()
  
-    # Phase 3: code-VEP flashing
+    # Phase 3: SSVEP flashing
     # if port_available:
     #     win.callOnFlip(port.sendLabel, id+1)
-    # win.callOnFlip(port_serial.serialWrite, id+1)
-    for i in range(stim_frames):
-        cw_stimuli[i].draw()
+    for i in range(flash_frames):
+        ssvep_stimuli[i].draw()
         win.flip()
-   
+
     # Phase 4: blink
     routine_timer.reset(0)
     routine_timer.add(blink_time)
@@ -205,5 +163,3 @@ for trial in trials:
 
 win.close()
 core.quit()
-
-# %%

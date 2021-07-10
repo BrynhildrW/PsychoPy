@@ -9,7 +9,8 @@ Refer:
 update: 2021/6/29
 
 """
-# %% load modules
+
+# load modules
 import os
 import string
 import sys
@@ -26,7 +27,7 @@ from ex_base import NeuroScanPort
 # port_address = 0xDEFC
 # port = NeuroScanPort(port_address=port_address)
 
-data_path = r'D:\SSVEP\program\cw_32codes.mat'
+data_path = r'cw_32codes.mat'
 code_data = io.loadmat(data_path)
 code_series = code_data['CodeSeries']  # (n_codes, n_elements)
 
