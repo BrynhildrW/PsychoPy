@@ -1,0 +1,3 @@
+numpy
+scipy
+psychopy == 3.0.0
