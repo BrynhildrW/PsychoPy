@@ -75,10 +75,10 @@ stim_pos[:,1] *= -1     # invert the y-axis
 # refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
 refresh_rate = 60
 display_time = 1.  # keyboard display time before 1st stimulus
-index_time = 0.5  # indicator display time
-rest_time = 1.  # rest-state time
+index_time = 0.5   # indicator display time
+rest_time = 1.     # rest-state time
 blink_time = 0.5
-code_time = 0.5  # time for each code
+code_time = 0.5    # time for each code
 blank_time = 0.05
 code_frames = int(code_time*refresh_rate)
 blank_frames = int(blank_time*refresh_rate)

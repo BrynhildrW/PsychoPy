@@ -22,11 +22,12 @@ from psychopy import (core, data, visual, monitors, event)
 
 from ex_base import NeuroScanPort
 
-# load in code infomation
+# config port transformation
 # port_available = False
 # port_address = 0xDEFC
 # port = NeuroScanPort(port_address=port_address)
 
+# load in code infomation
 data_path = r'cw_32codes.mat'
 code_data = io.loadmat(data_path)
 code_series = code_data['CodeSeries']  # (n_codes, n_elements)
@@ -74,14 +75,15 @@ stim_pos[:,1] *= -1     # invert the y-axis
 # refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
 refresh_rate = 60
 display_time = 1.  # keyboard display time before 1st stimulus
-index_time = 0.5  # indicator display time
-rest_time = 1.  # rest-state time
+index_time = 0.5   # indicator display time
+rest_time = 1.     # rest-state time
 blink_time = 0.5
-code_time = 0.3  # time for each code
+code_time = 0.5    # time for each code
 blank_time = 0.05
 code_frames = int(code_time*refresh_rate)
 blank_frames = int(blank_time*refresh_rate)
 
+# config colors
 n_codes = 5
 blank_code = np.zeros((blank_frames, 3))
 unit_code = np.zeros((code_frames, 3))
@@ -107,6 +109,7 @@ for code in code_series:
     ne += 1
 del ne, nc
 
+# config flashing elements
 cw_stimuli = []
 for sf in range(stim_frames):
     cw_stimuli.append(visual.ElementArrayStim(win=win, units='pix', nElements=n_elements,
@@ -154,7 +157,7 @@ for trial in trials:
     id = int(trial['id'])
     index_stimuli.setPos(stim_pos[id] + np.array([0, square_len/2]))
 
-    # Phase 1: speller & index
+    # Phase 1: speller & index (eye shifting)
     routine_timer.reset(0)
     routine_timer.add(index_time)
     while routine_timer.getTime() > 0:
@@ -163,7 +166,7 @@ for trial in trials:
         index_stimuli.draw()
         win.flip()
     
-    # Phase 2: eye shifting
+    # Phase 2: rest state
     routine_timer.reset(0)
     routine_timer.add(rest_time)
     while routine_timer.getTime() > 0:
@@ -171,7 +174,7 @@ for trial in trials:
             text_stimulus.draw()
         win.flip()
  
-    # Phase 3: code-VEP flashing
+    # Phase 3: Code Words flashing
     # if port_available:
     #     win.callOnFlip(port.sendLabel, id+1)
     for i in range(stim_frames):
