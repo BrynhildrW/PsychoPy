@@ -34,7 +34,7 @@ win.mouseVisible = False
 event.globalKeys.add(key='escape', func=win.close)
 
 # config basic parameters of stimuli
-n_elements = 32                          # number of the objects
+n_elements = 40                          # number of the objects
 stim_sizes = np.zeros((n_elements, 2))   # size array | unit: pix
 stim_pos = np.zeros((n_elements, 2))     # position array
 stim_oris = np.zeros((n_elements,))      # orientation array (default 0)
@@ -48,7 +48,7 @@ square_size = np.array([square_len, square_len])
 stim_sizes[:] = square_size 
 
 win_size = np.array(win.size)
-rows, columns = 4, 8
+rows, columns = 5, 8
 distribution = np.array([columns, rows])
 
 # divide the whole screen into rows*columns blocks, and pick the center of each block as the position
@@ -67,8 +67,8 @@ stim_pos -= win_size/2  # from Quadrant 1 to Quadrant 3
 stim_pos[:,1] *= -1     # invert the y-axis
 
 # config ssvep
-# refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
-refresh_rate = 60
+refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
+# refresh_rate = 60
 display_time = 1.  # keyboard display time before 1st stimulus
 index_time = 0.5   # indicator display time
 rest_time = 0.5    # rest-state time
@@ -77,9 +77,9 @@ flash_time= 0.5
 flash_frames = int(flash_time*refresh_rate)
 
 # config colors
-freqs = [x+4 for x in range(16)]  # 4-20Hz, d=1Hz
-phases = [0,1]  # 0 & pi
-stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='combine')
+freqs = [x*0.2+30 for x in range(40)]  # 8-15.8Hz, d=1Hz
+phases = [0.35*x for x in range(40)]  # 0 & pi
+stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='zip')
 
 # config flashing elements
 ssvep_stimuli = []
@@ -90,7 +90,7 @@ for i in range(flash_frames):  # add your simuli for each frame
     elementMask=None, texRes=48))
 
 # config text simuli
-symbols = ''.join([string.ascii_uppercase, '/12345'])  # if you want more stimulus, just add more symbols
+symbols = ''.join([string.ascii_uppercase, '1234567890+-*/'])  # if you want more stimulus, just add more symbols
 text_stimuli = []
 for symbol, pos in zip(symbols, stim_pos):
     text_stimuli.append(visual.TextStim(win=win, text=symbol, font='Arial', pos=pos, color=(1.,1.,1.), colorSpace='rgb',
@@ -116,50 +116,50 @@ routine_timer = core.CountdownTimer()
 
 # start routine
 # display speller interface
-# routine_timer.reset(0)
-# routine_timer.add(display_time)
-# while routine_timer.getTime() > 0:
-#     for text_stimulus in text_stimuli:
-#         text_stimulus.draw()
-#     win.flip()
+routine_timer.reset(0)
+routine_timer.add(display_time)
+while routine_timer.getTime() > 0:
+    for text_stimulus in text_stimuli:
+        text_stimulus.draw()
+    win.flip()
 
-# # begin to flash
-# for trial in trials:
-#     # initialise index position
-#     id = int(trial['id'])
-#     index_stimuli.setPos(stim_pos[id] + np.array([0, square_len/2]))
+# begin to flash
+for trial in trials:
+    # initialise index position
+    id = int(trial['id'])
+    index_stimuli.setPos(stim_pos[id] + np.array([0, square_len/2]))
 
-#     # Phase 1: speller & index (eye shifting)
-#     routine_timer.reset(0)
-#     routine_timer.add(index_time)
-#     while routine_timer.getTime() > 0:
-#         for text_stimulus in text_stimuli:
-#             text_stimulus.draw()
-#         index_stimuli.draw()
-#         win.flip()
+    # Phase 1: speller & index (eye shifting)
+    routine_timer.reset(0)
+    routine_timer.add(index_time)
+    while routine_timer.getTime() > 0:
+        for text_stimulus in text_stimuli:
+            text_stimulus.draw()
+        index_stimuli.draw()
+        win.flip()
     
-#     # Phase 2: rest state
-#     routine_timer.reset(0)
-#     routine_timer.add(rest_time)
-#     while routine_timer.getTime() > 0:
-#         for text_stimulus in text_stimuli:
-#             text_stimulus.draw()
-#         win.flip()
+    # Phase 2: rest state
+    routine_timer.reset(0)
+    routine_timer.add(rest_time)
+    while routine_timer.getTime() > 0:
+        for text_stimulus in text_stimuli:
+            text_stimulus.draw()
+        win.flip()
  
-#     # Phase 3: SSVEP flashing
-#     # if port_available:
-#     #     win.callOnFlip(port.sendLabel, id+1)
-#     for i in range(flash_frames):
-#         ssvep_stimuli[i].draw()
-#         win.flip()
+    # Phase 3: SSVEP flashing
+    # if port_available:
+    #     win.callOnFlip(port.sendLabel, id+1)
+    for i in range(flash_frames):
+        ssvep_stimuli[i].draw()
+        win.flip()
 
-#     # Phase 4: blink
-#     routine_timer.reset(0)
-#     routine_timer.add(blink_time)
-#     while routine_timer.getTime() > 0:
-#         for text_stimulus in text_stimuli:
-#             text_stimulus.draw()
-#         win.flip()
+    # Phase 4: blink
+    routine_timer.reset(0)
+    routine_timer.add(blink_time)
+    while routine_timer.getTime() > 0:
+        for text_stimulus in text_stimuli:
+            text_stimulus.draw()
+        win.flip()
 
-# win.close()
-# core.quit()
+win.close()
+core.quit()
