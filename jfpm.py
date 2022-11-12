@@ -34,7 +34,7 @@ win.mouseVisible = False
 event.globalKeys.add(key='escape', func=win.close)
 
 # config basic parameters of stimuli
-n_elements = 40                          # number of the objects
+n_elements = 16                          # number of the objects
 stim_sizes = np.zeros((n_elements, 2))   # size array | unit: pix
 stim_pos = np.zeros((n_elements, 2))     # position array
 stim_oris = np.zeros((n_elements,))      # orientation array (default 0)
@@ -43,12 +43,12 @@ stim_phases = np.zeros((n_elements,))    # phase array
 stim_opacities = np.ones((n_elements,))  # opacity array (default 1)
 stim_contrs = np.ones((n_elements,))     # contrast array (default 1)
 
-square_len = 150                         # side length of a single square | unit: pix
+square_len = 200                         # side length of a single square | unit: pix
 square_size = np.array([square_len, square_len])
 stim_sizes[:] = square_size 
 
 win_size = np.array(win.size)
-rows, columns = 5, 8
+rows, columns = 4, 4
 distribution = np.array([columns, rows])
 
 # divide the whole screen into rows*columns blocks, and pick the center of each block as the position
@@ -73,12 +73,12 @@ display_time = 1.  # keyboard display time before 1st stimulus
 index_time = 0.5   # indicator display time
 rest_time = 0.5    # rest-state time
 blink_time = 0.5
-flash_time= 0.5
+flash_time= 1.0
 flash_frames = int(flash_time*refresh_rate)
 
 # config colors
-freqs = [x*0.2+30 for x in range(40)]  # 8-15.8Hz, d=1Hz
-phases = [0.35*x for x in range(40)]  # 0 & pi
+freqs = [x*0.25+31 for x in range(16)]  # 8-15.8Hz, d=1Hz
+phases = [0.35*x for x in range(16)]  # 0 & pi
 stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='zip')
 
 # config flashing elements
