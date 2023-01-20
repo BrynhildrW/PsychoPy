@@ -91,7 +91,7 @@ for i in range(flash_frames):  # add your simuli for each frame
     elementMask=None, texRes=48))
 
 # config text simuli
-symbols = ''.join([string.ascii_uppercase, '/12345'])  # if you want more stimulus, just add more symbols
+symbols = ''.join([string.ascii_uppercase, '1234567890+-*/'])  # if you want more stimulus, just add more symbols
 text_stimuli = []
 for symbol, pos in zip(symbols, stim_pos):
     text_stimuli.append(visual.TextStim(win=win, text=symbol, font='Arial', pos=pos, color=(1.,1.,1.), colorSpace='rgb',
