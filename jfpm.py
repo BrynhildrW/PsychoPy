@@ -20,7 +20,7 @@ from numpy import newaxis as NA
 import scipy.io as io
 
 from psychopy import (core, data, visual, monitors, event)
-
+from psychopy.visual import line
 from ex_base import (NeuroScanPort, sinusoidal_sample)
 
 # port_available = False
@@ -28,13 +28,13 @@ from ex_base import (NeuroScanPort, sinusoidal_sample)
 # port = NeuroScanPort(port_address=port_address)
 
 # config window object
-win = visual.Window([1920, 1080], color=(-1,-1,-1), fullscr=False, monitor='testmonitor',
+win = visual.Window([1600, 900], color=(-1,-1,-1), fullscr=True, monitor='testmonitor',
                     screen=0, waitBlanking=False, allowGUI=True)
 win.mouseVisible = False
 event.globalKeys.add(key='escape', func=win.close)
 
 # config basic parameters of stimuli
-n_elements = 32                          # number of the objects
+n_elements = 4                          # number of the objects
 stim_sizes = np.zeros((n_elements, 2))   # size array | unit: pix
 stim_pos = np.zeros((n_elements, 2))     # position array
 stim_oris = np.zeros((n_elements,))      # orientation array (default 0)
@@ -43,12 +43,12 @@ stim_phases = np.zeros((n_elements,))    # phase array
 stim_opacities = np.ones((n_elements,))  # opacity array (default 1)
 stim_contrs = np.ones((n_elements,))     # contrast array (default 1)
 
-square_len = 150                         # side length of a single square | unit: pix
+square_len = 250                         # side length of a single square | unit: pix
 square_size = np.array([square_len, square_len])
 stim_sizes[:] = square_size 
 
 win_size = np.array(win.size)
-rows, columns = 4, 8
+rows, columns = 2, 2
 distribution = np.array([columns, rows])
 
 # divide the whole screen into rows*columns blocks, and pick the center of each block as the position
@@ -67,26 +67,27 @@ stim_pos -= win_size/2  # from Quadrant 1 to Quadrant 3
 stim_pos[:,1] *= -1     # invert the y-axis
 
 # config ssvep
-# refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
-refresh_rate = 60
+refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
+# refresh_rate = 165
 display_time = 1.  # keyboard display time before 1st stimulus
 index_time = 0.5   # indicator display time
 rest_time = 0.5    # rest-state time
 blink_time = 0.5
-flash_time= 0.5
+flash_time= 1
 flash_frames = int(flash_time*refresh_rate)
 
 # config colors
-freqs = [x+4 for x in range(16)]  # 15-30Hz, d=1Hz
-phases = [0,1]  # 0 & pi
-stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='combine')
+freqs = [33,33,33,33]  # 15-30Hz, d=1Hz
+phases = [0,0.5,1,1.5]  # 0 & pi
+stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='zip')
 
 # config flashing elements
+pic_path = r'C:\Users\Brynhildr\Desktop\fig2.png'
 ssvep_stimuli = []
 for i in range(flash_frames):  # add your simuli for each frame
     ssvep_stimuli.append(visual.ElementArrayStim(win=win, units='pix', nElements=n_elements,
     sizes=stim_sizes, xys=stim_pos, colors=stim_colors[i,...], opacities=stim_opacities,
-    oris=stim_oris, sfs=stim_sfs, contrs=stim_contrs, phases=stim_phases, elementTex=np.ones((128,128)),
+    oris=stim_oris, sfs=stim_sfs, contrs=stim_contrs, phases=stim_phases, elementTex=pic_path,
     elementMask=None, texRes=48))
 
 # config text simuli
