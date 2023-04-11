@@ -28,13 +28,13 @@ from ex_base import (NeuroScanPort, sinusoidal_sample)
 # port = NeuroScanPort(port_address=port_address)
 
 # config window object
-win = visual.Window([1600, 900], color=(-1,-1,-1), fullscr=True, monitor='testmonitor',
+win = visual.Window([1600, 900], color=(-1,-1,-1), fullscr=False, monitor='testmonitor',
                     screen=0, waitBlanking=False, allowGUI=True)
 win.mouseVisible = False
 event.globalKeys.add(key='escape', func=win.close)
 
 # config basic parameters of stimuli
-n_elements = 4                          # number of the objects
+n_elements = 2                          # number of the objects
 stim_sizes = np.zeros((n_elements, 2))   # size array | unit: pix
 stim_pos = np.zeros((n_elements, 2))     # position array
 stim_oris = np.zeros((n_elements,))      # orientation array (default 0)
@@ -48,7 +48,7 @@ square_size = np.array([square_len, square_len])
 stim_sizes[:] = square_size 
 
 win_size = np.array(win.size)
-rows, columns = 2, 2
+rows, columns = 1, 2
 distribution = np.array([columns, rows])
 
 # divide the whole screen into rows*columns blocks, and pick the center of each block as the position
@@ -71,14 +71,14 @@ refresh_rate = np.ceil(win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
 # refresh_rate = 165
 display_time = 1.  # keyboard display time before 1st stimulus
 index_time = 0.5   # indicator display time
-rest_time = 0.5    # rest-state time
-blink_time = 0.5
-flash_time= 1
+rest_time = 0.3    # rest-state time
+blink_time = 0.1
+flash_time= 0.5
 flash_frames = int(flash_time*refresh_rate)
 
 # config colors
-freqs = [33,33,33,33]  # 15-30Hz, d=1Hz
-phases = [0,0.5,1,1.5]  # 0 & pi
+freqs = [15,15]  # 15-30Hz, d=1Hz
+phases = [0,0.5]  # 0 & pi
 stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='zip')
 
 # config flashing elements
@@ -106,7 +106,7 @@ index_stimuli = visual.TextStim(win=win, text='\u2BC6', font='Arial', color=(1.,
 
 # config experiment parameters
 ssvep_conditions = [{'id': i} for i in range(n_elements)]
-ssvep_nrep = 1
+ssvep_nrep = 5
 trials = data.TrialHandler(ssvep_conditions, ssvep_nrep, name='ssvep', method='random')
 
 # initialise experiment
