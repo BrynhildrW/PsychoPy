@@ -15,16 +15,54 @@ import sys
 
 import numpy as np
 from numpy import (sin, pi)
+from numpy import ndarray
 from numpy import newaxis as NA
 import scipy.io as io
 
 from psychopy import (core, data, visual, monitors, event)
 from psychopy.visual import line
-from ex_base import (NeuroScanPort, sinusoidal_sample)
+from typing import Optional, List, Tuple, Dict, Union, Callable, Any
+# from ex_base import (NeuroScanPort, sinusoidal_sample)
 
 # port_available = False
 # port_address = 0xDEFC
 # port = NeuroScanPort(port_address=port_address)
+
+
+def sinusoidal_sample(
+        freqs: List[Union[int, float]],
+        phases: List[Union[int, float]],
+        rrate: int,
+        flash_frames: int) -> ndarray:
+    """Sampled sinusoidal stimulation method.
+
+    Args:
+        freqs (List[Union[int, float]]): Stim frequencies.
+            n_elements = len(freqs).
+        phases (List[Union[int, float]]): Initial phases.
+            n_elements = len(phases).
+        rrate (int): Refresh rate.
+        flash_frames (int).
+
+    Returns:
+        stim_colors (ndarray): (flash_frames, n_elements, 3)
+            Color values in RGB space of each frame.
+    """
+    time_point = np.linspace(
+        start=0,
+        stop=(flash_frames - 1) / rrate,
+        num=flash_frames
+    )
+    stim_colors = np.zeros((flash_frames, 3))[:, None, :]  # (flash_frames, 1, 3)
+    for freq, phase in zip(freqs, phases):
+        sinw = np.sin(2 * np.pi * freq * time_point + pi * phase)
+        stim_colors = np.concatenate(
+            (stim_colors, np.vstack((sinw, sinw, sinw)).T[:, None, :]),
+            axis=1
+        )  # add (flash_frames, 1, 3) on 2nd axis for each loop
+    stim_colors = np.delete(stim_colors, 0, axis=1)
+    return stim_colors
+
 
 # %% config window object
 win = visual.Window(
@@ -40,7 +78,7 @@ win.mouseVisible = False
 event.globalKeys.add(key='escape', func=win.close)
 
 # config basic parameters of stimuli
-n_elements = 320                          # number of the objects
+n_elements = 40                          # number of the objects
 stim_sizes = np.zeros((n_elements, 2))   # size array | unit: pix
 stim_pos = np.zeros((n_elements, 2))     # position array
 stim_oris = np.zeros((n_elements,))      # orientation array (default 0)
@@ -49,12 +87,12 @@ stim_phases = np.zeros((n_elements,))    # phase array
 stim_opacities = np.ones((n_elements,))  # opacity array (default 1)
 stim_contrs = np.ones((n_elements,))     # contrast array (default 1)
 
-square_len = 80                         # side length of a single square | unit: pix
+square_len = 200                         # side length of a single square | unit: pix
 square_size = np.array([square_len, square_len])
 stim_sizes[:] = square_size
 
 win_size = np.array(win.size)
-rows, columns = 16, 20
+rows, columns = 5, 8
 distribution = np.array([columns, rows])
 
 # divide the whole screen into rows*columns blocks, and pick the center of each block as the position
@@ -83,16 +121,16 @@ flash_time = 1
 flash_frames = int(flash_time*refresh_rate)
 
 # config colors
-freqs = [8 + 0.1 * x for x in range(320)]  # 15-30Hz, d=1Hz
-phases = [0.35 * x for x in range(320)]  # 0 & pi
-stim_colors = sinusoidal_sample(freqs, phases, refresh_rate, flash_frames, mode='zip')
+freqs = [8 + 0.2 * x for x in range(40)]  # 8-15.8Hz, d=0.2Hz
+phases = [0.35 * x for x in range(40)]  # d=0.35pi
+stim_colors = sinusoidal_sample(
+    freqs=freqs,
+    phases=phases,
+    rrate=refresh_rate,
+    flash_frames=flash_frames
+)
 
 # config flashing elements
-# pic_path = r'C:\Users\Administrator\Desktop\圆环\0.png'
-pic_path = r'C:\Users\Administrator\Desktop\square_with_cross.png'
-# pic_path = r'C:\Users\Administrator\Desktop\圆环\120.png'
-# pic_path = r'C:\Users\Administrator\Desktop\圆环\180.png'
-# pic_path = r'C:\Users\Administrator\Desktop\圆环\240.png'
 ssvep_stimuli = []
 for i in range(flash_frames):  # add your simuli for each frame
     ssvep_stimuli.append(visual.ElementArrayStim(
@@ -107,13 +145,13 @@ for i in range(flash_frames):  # add your simuli for each frame
         sfs=stim_sfs,
         contrs=stim_contrs,
         phases=stim_phases,
-        elementTex=pic_path,
+        elementTex=np.ones((32, 32)),
         elementMask=None
     ))
 
 # config text simuli
-# symbols = ''.join([string.ascii_uppercase, '1234567890+-*/'])  # if you want more stimulus, just add more symbols
-symbols = [str(i) for i in range(320)]
+symbols = ''.join([string.ascii_uppercase, '1234567890+-*/'])  # if you want more stimulus, just add more symbols
+# symbols = [str(i) for i in range(40)]
 text_stimuli = []
 for symbol, pos in zip(symbols, stim_pos):
     text_stimuli.append(visual.TextStim(
