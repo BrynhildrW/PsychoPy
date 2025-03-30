@@ -149,7 +149,7 @@ index_stimuli = visual.TextStim(
 
 # config experiment parameters
 ssvep_conditions = [{'id': i} for i in range(n_elements)]
-ssvep_nrep = 1
+ssvep_nrep = 5
 trials = data.TrialHandler(ssvep_conditions, ssvep_nrep, name='ssvep', method='random')
 
 # initialise experiment
